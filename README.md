@@ -32,13 +32,14 @@
 
 ## Container Runtime
 
-| Property      | Value                                              |
-| ------------- | -------------------------------------------------- |
-| Image         | `ghcr.io/copexit/am-i-exposed-umbrel:v0.10.0`     |
-| Architectures | x86_64, aarch64                                    |
-| Entrypoint    | Default (nginx with envsubst template processing)  |
+| Image       | Source                                             | Purpose                              |
+| ----------- | -------------------------------------------------- | ------------------------------------ |
+| main        | `ghcr.io/copexit/am-i-exposed-umbrel:v0.10.0`     | Nginx serving static frontend + API proxy |
+| tor-proxy   | Custom build (`tor-proxy/Dockerfile`)              | HTTP-to-SOCKS bridge for Chainalysis lookups |
 
-The image is the upstream Umbrel build — a static Next.js export served by nginx, with a reverse proxy to route `/api/*` requests to the local Mempool instance.
+Architectures: x86_64, aarch64
+
+The main image is the upstream Umbrel build — a static Next.js export served by nginx, with a reverse proxy to route `/api/*` requests to the local Mempool instance. The tor-proxy sidecar forwards Chainalysis address checks through Tor's SOCKS5 proxy for private surveillance database lookups.
 
 ## Volumes
 
@@ -54,19 +55,21 @@ The image is the upstream Umbrel build — a static Next.js export served by ngi
 
 ## Dependencies
 
-| Dependency | Required | Purpose                                           |
-| ---------- | -------- | ------------------------------------------------- |
-| Mempool    | Yes      | Provides blockchain API data through your own node |
+| Dependency | Required | Purpose                                                        |
+| ---------- | -------- | -------------------------------------------------------------- |
+| Mempool    | Yes      | Provides blockchain API data through your own node             |
+| Tor        | Yes      | SOCKS5 proxy for private Chainalysis address lookups via Tor   |
 
-All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance at `mempool.startos:8080`, so no blockchain queries leave your server.
+All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance at `mempool.startos:8080`, so no blockchain queries leave your server. Chainalysis address checks are routed through Tor via the tor-proxy sidecar for private surveillance database lookups.
 
 ## Configuration Management
 
-| StartOS-Managed                        | Upstream-Managed |
-| -------------------------------------- | ---------------- |
-| Mempool API connection (automatic)     | None             |
+| StartOS-Managed                                  | Upstream-Managed |
+| ------------------------------------------------ | ---------------- |
+| Mempool API connection (automatic)               | None             |
+| Tor proxy connection (automatic via tor.startos) | None             |
 
-No user configuration is needed. The Mempool connection is set automatically via environment variables.
+No user configuration is needed. Both connections are set automatically via environment variables.
 
 ## Actions
 
@@ -78,15 +81,14 @@ The `main` volume is backed up.
 
 ## Health Checks
 
-| Check         | Method                  | Messages                            |
-| ------------- | ----------------------- | ----------------------------------- |
-| Web Interface | Port listening (8080)   | Ready: "The web interface is ready" |
+| Check         | Method                  | Display | Messages                            |
+| ------------- | ----------------------- | ------- | ----------------------------------- |
+| Tor Proxy     | Port listening (3001)   | Hidden  | Ready: "Tor proxy is ready"        |
+| Web Interface | Port listening (8080)   | Shown   | Ready: "The web interface is ready" |
 
 ## Limitations and Differences
 
-1. **No Tor proxy sidecar** — The upstream Umbrel version includes a Tor proxy sidecar for checking `.onion` exposure. This is not included on StartOS. StartOS handles Tor natively.
-2. **No Tor proxy endpoint** — The `/tor-proxy/*` nginx location exists but points to a dummy backend and will return 502 if accessed.
-3. **Mempool explorer links** — The `/api/local-info` endpoint returns empty values for `mempoolOnion` since Tor is handled differently on StartOS.
+1. **Mempool explorer links** — The `/api/local-info` endpoint returns empty values for `mempoolOnion` since Tor is handled differently on StartOS.
 
 ## What Is Unchanged from Upstream
 
@@ -94,6 +96,7 @@ The `main` volume is backed up.
 - CoinJoin detection (Whirlpool, WabiSabi, JoinMarket)
 - Boltzmann entropy calculation via WebAssembly
 - Wallet fingerprinting and entity matching
+- Chainalysis address exposure checks (via Tor proxy)
 - Privacy scoring (0–100 with letter grades A+ to F)
 - Support for mainnet, testnet4, and signet
 - 100% client-side analysis in browser
@@ -112,22 +115,32 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development wo
 ```yaml
 package_id: am-i-exposed
 upstream_version: 0.10.0
-image: ghcr.io/copexit/am-i-exposed-umbrel:v0.10.0
+images:
+  main: ghcr.io/copexit/am-i-exposed-umbrel:v0.10.0
+  tor-proxy: custom build (tor-proxy/Dockerfile)
 architectures: [x86_64, aarch64]
 volumes:
   main: /data
 ports:
   ui: 8080
+  tor-proxy: 3001 (internal)
 dependencies:
   - mempool
+  - tor
 startos_managed_env_vars:
-  - APP_MEMPOOL_IP
-  - APP_MEMPOOL_PORT
-  - APP_TOR_PROXY_IP
-  - APP_TOR_PROXY_PORT
-  - APP_MEMPOOL_HIDDEN_SERVICE
+  main:
+    - APP_MEMPOOL_IP
+    - APP_MEMPOOL_PORT
+    - APP_TOR_PROXY_IP
+    - APP_TOR_PROXY_PORT
+    - APP_MEMPOOL_HIDDEN_SERVICE
+  tor-proxy:
+    - PORT
+    - TOR_PROXY_IP
+    - TOR_PROXY_PORT
 actions: []
 health_checks:
+  - port_listening: 3001
   - port_listening: 8080
 backup_volumes:
   - main

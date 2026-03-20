@@ -31,3 +31,16 @@ export const mempoolDescription = {
   fr_FR:
     'Am I Exposed? nécessite Mempool pour interroger les données de la blockchain Bitcoin en privé via votre propre nœud.',
 }
+
+export const torDescription = {
+  en_US:
+    'Am I Exposed? uses Tor to privately check addresses against Chainalysis surveillance databases.',
+  es_ES:
+    'Am I Exposed? usa Tor para verificar direcciones de forma privada contra bases de datos de vigilancia de Chainalysis.',
+  de_DE:
+    'Am I Exposed? nutzt Tor, um Adressen privat gegen Chainalysis-Überwachungsdatenbanken zu prüfen.',
+  pl_PL:
+    'Am I Exposed? używa Tor do prywatnego sprawdzania adresów w bazach danych nadzoru Chainalysis.',
+  fr_FR:
+    'Am I Exposed? utilise Tor pour vérifier les adresses de manière privée dans les bases de données de surveillance Chainalysis.',
+}
