@@ -7,7 +7,7 @@
 > **Upstream docs:** <https://github.com/Copexit/am-i-exposed>
 >
 > Everything not listed in this document should behave the same as upstream
-> Am I Exposed? v0.10.0. If a feature, setting, or behavior is not mentioned
+> Am I Exposed?. If a feature, setting, or behavior is not mentioned
 > here, the upstream documentation is accurate and fully applicable.
 
 [Am I Exposed?](https://github.com/Copexit/am-i-exposed) is a client-side Bitcoin privacy analysis tool that grades your transactions and addresses using chain analysis heuristics — the same techniques used by surveillance firms. Paste any Bitcoin address or transaction ID and get a privacy score from 0 to 100 with a letter grade and actionable findings.
@@ -34,7 +34,7 @@
 
 | Image       | Source                                             | Purpose                              |
 | ----------- | -------------------------------------------------- | ------------------------------------ |
-| main        | `ghcr.io/copexit/am-i-exposed-umbrel:v0.10.0`     | Nginx serving static frontend + API proxy |
+| main        | `ghcr.io/copexit/am-i-exposed-umbrel`              | Nginx serving static frontend + API proxy |
 | tor-proxy   | Custom build (`tor-proxy/Dockerfile`)              | HTTP-to-SOCKS bridge for Chainalysis lookups |
 
 Architectures: x86_64, aarch64
@@ -114,9 +114,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development wo
 
 ```yaml
 package_id: am-i-exposed
-upstream_version: 0.10.0
 images:
-  main: ghcr.io/copexit/am-i-exposed-umbrel:v0.10.0
+  main: ghcr.io/copexit/am-i-exposed-umbrel
   tor-proxy: custom build (tor-proxy/Dockerfile)
 architectures: [x86_64, aarch64]
 volumes:
