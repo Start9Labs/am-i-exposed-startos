@@ -18,6 +18,8 @@
 
 - [Container Runtime](#container-runtime)
 - [Volumes](#volumes)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Configuration Management](#configuration-management)
 - [Network Interfaces](#network-interfaces)
 - [Dependencies](#dependencies)
 - [Actions](#actions)
@@ -47,6 +49,10 @@ The main image is the upstream Umbrel build — a static Next.js export served b
 | ------ | ----------- | --------------- |
 | `main` | `/data`     | Persistent data |
 
+## Installation and First-Run Flow
+
+No special setup is required. The service starts immediately with no wizards, credentials, or initial configuration. Both the Mempool and Tor dependencies must be installed and running.
+
 ## Network Interfaces
 
 | Interface | Port | Protocol | Purpose                          |
@@ -55,12 +61,29 @@ The main image is the upstream Umbrel build — a static Next.js export served b
 
 ## Dependencies
 
-| Dependency | Required | Purpose                                                        |
-| ---------- | -------- | -------------------------------------------------------------- |
-| Mempool    | Yes      | Provides blockchain API data through your own node             |
-| Tor        | Yes      | SOCKS5 proxy for private Chainalysis address lookups via Tor   |
+### Mempool (required)
 
-All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance at `mempool.startos:8080`, so no blockchain queries leave your server. Chainalysis address checks are routed through Tor via the tor-proxy sidecar for private surveillance database lookups.
+| Property | Value |
+|----------|-------|
+| Version constraint | `>= 3.2.1` |
+| Required state | Running |
+| Health checks | `webui` |
+| Mounted volumes | None |
+| Purpose | Blockchain API data through your own node |
+
+All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance at `mempool.startos:8080`, so no blockchain queries leave your server.
+
+### Tor (required)
+
+| Property | Value |
+|----------|-------|
+| Version constraint | `>= 0.4.9.5` |
+| Required state | Running |
+| Health checks | `tor` |
+| Mounted volumes | None |
+| Purpose | SOCKS5 proxy for private Chainalysis address lookups |
+
+Chainalysis address checks are routed through Tor via the tor-proxy sidecar for private surveillance database lookups.
 
 ## Configuration Management
 
