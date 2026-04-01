@@ -5,8 +5,7 @@ export const manifest = setupManifest({
   id: 'am-i-exposed',
   title: 'Am I Exposed?',
   license: 'MIT',
-  packageRepo:
-    'https://github.com/Start9Labs/am-i-exposed-startos/tree/update/040',
+  packageRepo: 'https://github.com/Start9Labs/am-i-exposed-startos',
   upstreamRepo: 'https://github.com/Copexit/am-i-exposed',
   marketingUrl: 'https://am-i.exposed',
   donationUrl: null,
@@ -16,7 +15,7 @@ export const manifest = setupManifest({
   images: {
     main: {
       source: {
-        dockerTag: 'ghcr.io/copexit/am-i-exposed-umbrel:v0.10.0',
+        dockerTag: 'ghcr.io/copexit/am-i-exposed-umbrel:v0.35.6',
       },
       arch: ['x86_64', 'aarch64'],
     },
@@ -35,7 +34,7 @@ export const manifest = setupManifest({
       optional: false,
       metadata: {
         title: 'Mempool',
-        icon: 'https://raw.githubusercontent.com/Start9Labs/mempool-startos/refs/heads/update/040/icon.svg',
+        icon: 'https://raw.githubusercontent.com/Start9Labs/mempool-startos/58ef0d5b4f29577baa65da7a4a4987621d88c0e7/icon.svg',
       },
     },
     tor: {
