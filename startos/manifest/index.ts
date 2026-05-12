@@ -9,7 +9,6 @@ export const manifest = setupManifest({
   upstreamRepo: 'https://github.com/Copexit/am-i-exposed',
   marketingUrl: 'https://am-i.exposed',
   donationUrl: null,
-  docsUrls: ['https://github.com/Copexit/am-i-exposed/tree/main/docs'],
   description: { short, long },
   volumes: ['main'],
   images: {
