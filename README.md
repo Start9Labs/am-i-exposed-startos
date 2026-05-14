@@ -121,9 +121,9 @@ The `main` volume is backed up.
 - Wallet fingerprinting and entity matching
 - Chainalysis address exposure checks (via Tor proxy)
 - Privacy scoring (0–100 with letter grades A+ to F)
-- Support for mainnet, testnet4, and signet
+- Support for mainnet, testnet3, testnet4, and signet
 - 100% client-side analysis in browser
-- All 5 language translations (EN, ES, DE, FR, PT)
+- All 6 language translations (EN, ES, DE, FR, PT, PL)
 
 ---
 
