@@ -15,7 +15,7 @@ export const manifest = setupManifest({
   images: {
     main: {
       source: {
-        dockerTag: 'ghcr.io/copexit/am-i-exposed-umbrel:v0.35.6',
+        dockerTag: 'ghcr.io/copexit/am-i-exposed-umbrel:v0.35.7',
       },
       arch: ['x86_64', 'aarch64'],
     },
