@@ -1,13 +1,13 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.35.7:2',
+  version: '0.35.7:3',
   releaseNotes: {
-    en_US: `Use the official Am I Exposed? logo as the service icon.`,
-    es_ES: `Se usa el logotipo oficial de Am I Exposed? como icono del servicio.`,
-    de_DE: `Verwendet das offizielle Am-I-Exposed?-Logo als Dienstsymbol.`,
-    pl_PL: `Użyto oficjalnego logo Am I Exposed? jako ikony usługi.`,
-    fr_FR: `Utilise le logo officiel d'Am I Exposed? comme icône du service.`,
+    en_US: `Automatically reconnects to Mempool when it restarts (e.g. on update), instead of getting stuck on "Mempool Unreachable" until manually restarted.`,
+    es_ES: `Se reconecta automáticamente a Mempool cuando este se reinicia (por ejemplo, al actualizarse), en lugar de quedarse bloqueado en «Mempool no accesible» hasta reiniciarlo manualmente.`,
+    de_DE: `Stellt die Verbindung zu Mempool automatisch wieder her, wenn dieser neu startet (z. B. bei einer Aktualisierung), statt bis zum manuellen Neustart bei „Mempool nicht erreichbar“ hängen zu bleiben.`,
+    pl_PL: `Automatycznie ponownie łączy się z Mempool po jego restarcie (np. przy aktualizacji), zamiast utknąć na „Mempool nieosiągalny” do czasu ręcznego restartu.`,
+    fr_FR: `Se reconnecte automatiquement à Mempool lorsqu'il redémarre (par exemple lors d'une mise à jour), au lieu de rester bloqué sur « Mempool injoignable » jusqu'à un redémarrage manuel.`,
   },
   migrations: {
     up: async ({ effects }) => {},

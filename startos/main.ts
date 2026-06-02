@@ -5,6 +5,15 @@ import { torProxyPort, uiPort } from './utils'
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting Am I Exposed?'))
 
+  // The backend connects to mempool.startos:8080 once at startup and never
+  // reconnects on its own — when Mempool restarts (e.g. on update) its web UI
+  // bounces and the app gets stuck showing "Mempool Unreachable" until it is
+  // manually restarted. Reading Mempool's health here subscribes main to it:
+  // while webui is down this throws and holds the daemons, and main re-runs —
+  // restarting primary, which reconnects — as soon as Mempool is healthy again.
+  const deps = await sdk.checkDependencies(effects, ['mempool'])
+  deps.throwIfHealthNotSatisfied('mempool', 'webui')
+
   return sdk.Daemons.of(effects)
     .addDaemon('tor-proxy', {
       subcontainer: await sdk.SubContainer.of(
