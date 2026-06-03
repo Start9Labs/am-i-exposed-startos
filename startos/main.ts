@@ -7,12 +7,20 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
   // The backend connects to mempool.startos:8080 once at startup and never
   // reconnects on its own — when Mempool restarts (e.g. on update) its web UI
-  // bounces and the app gets stuck showing "Mempool Unreachable" until it is
-  // manually restarted. Reading Mempool's health here subscribes main to it:
-  // while webui is down this throws and holds the daemons, and main re-runs —
-  // restarting primary, which reconnects — as soon as Mempool is healthy again.
-  const deps = await sdk.checkDependencies(effects, ['mempool'])
-  deps.throwIfHealthNotSatisfied('mempool', 'webui')
+  // bounces and the app gets stuck on "Mempool Unreachable" until manually
+  // restarted. getStatus(effects, ...).const() subscribes main to Mempool's
+  // status, re-running it on every restart/stop/health change; throwing while
+  // Mempool's webui health isn't success holds the daemons and restarts
+  // primary — reconnecting it — as soon as Mempool is reachable again.
+  // (Mempool's webui requires its api, so webui success implies the backend
+  // is up too.) checkDependencies can't do this: it's a one-shot read with no
+  // reactive callback, so main would never re-run when Mempool's status changed.
+  const mempoolStatus = await sdk
+    .getStatus(effects, { packageId: 'mempool' })
+    .const()
+  if (mempoolStatus?.health['webui']?.result !== 'success') {
+    throw new Error('Waiting for Mempool to be reachable')
+  }
 
   return sdk.Daemons.of(effects)
     .addDaemon('tor-proxy', {

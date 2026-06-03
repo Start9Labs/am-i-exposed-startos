@@ -1,7 +1,7 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.35.7:3',
+  version: '0.35.7:4',
   releaseNotes: {
     en_US: `Automatically reconnects to Mempool when it restarts (e.g. on update), instead of getting stuck on "Mempool Unreachable" until manually restarted.`,
     es_ES: `Se reconecta automáticamente a Mempool cuando este se reinicia (por ejemplo, al actualizarse), en lugar de quedarse bloqueado en «Mempool no accesible» hasta reiniciarlo manualmente.`,
