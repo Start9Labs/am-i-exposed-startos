@@ -156,6 +156,7 @@ startos_managed_env_vars:
     - APP_TOR_PROXY_IP
     - APP_TOR_PROXY_PORT
     - APP_MEMPOOL_HIDDEN_SERVICE
+    - APP_MEMPOOL_EXTERNAL_URL
   tor-proxy:
     - PORT
     - TOR_PROXY_IP

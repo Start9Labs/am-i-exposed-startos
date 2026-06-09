@@ -1,13 +1,13 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.35.7:4',
+  version: '0.35.7:5',
   releaseNotes: {
-    en_US: `Automatically reconnects to Mempool when it restarts (e.g. on update), instead of getting stuck on "Mempool Unreachable" until manually restarted.`,
-    es_ES: `Se reconecta automáticamente a Mempool cuando este se reinicia (por ejemplo, al actualizarse), en lugar de quedarse bloqueado en «Mempool no accesible» hasta reiniciarlo manualmente.`,
-    de_DE: `Stellt die Verbindung zu Mempool automatisch wieder her, wenn dieser neu startet (z. B. bei einer Aktualisierung), statt bis zum manuellen Neustart bei „Mempool nicht erreichbar“ hängen zu bleiben.`,
-    pl_PL: `Automatycznie ponownie łączy się z Mempool po jego restarcie (np. przy aktualizacji), zamiast utknąć na „Mempool nieosiągalny” do czasu ręcznego restartu.`,
-    fr_FR: `Se reconnecte automatiquement à Mempool lorsqu'il redémarre (par exemple lors d'une mise à jour), au lieu de rester bloqué sur « Mempool injoignable » jusqu'à un redémarrage manuel.`,
+    en_US: `Fixes the "View on local mempool" link, which previously pointed to an unreachable address. It now opens your Mempool service, preferring a public domain, then a public IP address, then the local .local address.`,
+    es_ES: `Corrige el enlace «Ver en mempool local», que antes apuntaba a una dirección inaccesible. Ahora abre tu servicio Mempool, dando preferencia a un dominio público, luego a una dirección IP pública y, por último, a la dirección .local local.`,
+    de_DE: `Behebt den Link „Im lokalen Mempool ansehen“, der zuvor auf eine nicht erreichbare Adresse verwies. Er öffnet jetzt deinen Mempool-Dienst und bevorzugt dabei eine öffentliche Domain, dann eine öffentliche IP-Adresse und zuletzt die lokale .local-Adresse.`,
+    pl_PL: `Naprawia link „Zobacz w lokalnym mempoolu”, który wcześniej wskazywał na nieosiągalny adres. Teraz otwiera Twoją usługę Mempool, preferując publiczną domenę, następnie publiczny adres IP, a na końcu lokalny adres .local.`,
+    fr_FR: `Corrige le lien « Voir sur le mempool local », qui pointait auparavant vers une adresse injoignable. Il ouvre désormais votre service Mempool, en privilégiant un domaine public, puis une adresse IP publique, et enfin l'adresse .local locale.`,
   },
   migrations: {
     up: async ({ effects }) => {},
