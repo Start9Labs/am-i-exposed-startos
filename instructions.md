@@ -22,3 +22,5 @@ Am I Exposed? requires two dependencies — install and start each before launch
 ### Web UI
 
 Paste an address, xpub, or transaction id and the tool walks you through what an outside observer could infer about it.
+
+Results that link to **View on local mempool** open your own Mempool service — using its public address if you have one set up, otherwise its `.local` address (reachable from your home network).
