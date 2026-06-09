@@ -73,6 +73,8 @@ No special setup is required. The service starts immediately with no wizards, cr
 
 All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance at `mempool.startos:8080`, so no blockchain queries leave your server.
 
+The upstream UI's "View on local mempool" link is the one exception — it's a user-facing URL, not an internal call. `startos/main.ts` resolves Mempool's `webui` service interface and passes the result as `APP_MEMPOOL_EXTERNAL_URL`, preferring a public domain, then a public IP:port, then the `.local` mDNS address (empty string if none, which is a no-op upstream). Without it, the upstream image builds the link as `<this-app-host>:8080`, which is wrong on StartOS where each service has its own hostname.
+
 ### Tor (required)
 
 | Property | Value |
@@ -156,6 +158,7 @@ startos_managed_env_vars:
     - APP_TOR_PROXY_IP
     - APP_TOR_PROXY_PORT
     - APP_MEMPOOL_HIDDEN_SERVICE
+    - APP_MEMPOOL_EXTERNAL_URL
   tor-proxy:
     - PORT
     - TOR_PROXY_IP

@@ -21,6 +21,20 @@ export const main = sdk.setupMain(async ({ effects }) => {
   if (mempoolStatus?.health['webui']?.result !== 'success') {
     throw new Error('Waiting for Mempool to be reachable')
   }
+  // Prefer a public domain, then a public IP:port, then the mDNS
+  // .local address; empty string is a no-op upstream.
+  const mempoolAddress = (
+    await sdk.serviceInterface
+      .get(effects, { packageId: 'mempool', id: 'webui' })
+      .const()
+  )?.addressInfo
+  const APP_MEMPOOL_EXTERNAL_URL =
+    mempoolAddress
+      ?.filter({ visibility: 'public', kind: 'domain' })
+      .format()[0] ??
+    mempoolAddress?.filter({ visibility: 'public', kind: 'ip' }).format()[0] ??
+    mempoolAddress?.filter({ kind: 'mdns' }).format()[0] ??
+    ''
 
   return sdk.Daemons.of(effects)
     .addDaemon('tor-proxy', {
@@ -68,6 +82,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
           APP_TOR_PROXY_IP: '127.0.0.1',
           APP_TOR_PROXY_PORT: String(torProxyPort),
           APP_MEMPOOL_HIDDEN_SERVICE: '',
+          APP_MEMPOOL_EXTERNAL_URL,
         },
       },
       ready: {
