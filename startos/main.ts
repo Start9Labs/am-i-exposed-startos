@@ -22,6 +22,20 @@ export const main = sdk.setupMain(async ({ effects }) => {
     throw new Error('Waiting for Mempool to be reachable')
   }
 
+  // Fix for https://github.com/Copexit/am-i-exposed/issues/95 - the "View on
+  // local mempool" link in the upstream UI is built from APP_MEMPOOL_PORT
+  // assuming the app and mempool share a hostname (Umbrel layout). On StartOS
+  // each service has its own hostname, so the host:port heuristic produces a
+  // link to `<this-app-host>:8080`, which is not mempool. Upstream now
+  // accepts an optional APP_MEMPOOL_EXTERNAL_URL env var that overrides the
+  // heuristic; resolve mempool's actual user-facing webui URL via the SDK
+  // and pass it in. Empty string is a no-op upstream.
+  const mempoolUi = await sdk.serviceInterface
+    .get(effects, { packageId: 'mempool', interfaceId: 'webui' })
+    .const()
+  const mempoolExternalUrl =
+    mempoolUi?.addressInfo?.nonLocal?.format()[0] ?? ''
+
   return sdk.Daemons.of(effects)
     .addDaemon('tor-proxy', {
       subcontainer: await sdk.SubContainer.of(
@@ -68,6 +82,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
           APP_TOR_PROXY_IP: '127.0.0.1',
           APP_TOR_PROXY_PORT: String(torProxyPort),
           APP_MEMPOOL_HIDDEN_SERVICE: '',
+          APP_MEMPOOL_EXTERNAL_URL: mempoolExternalUrl,
         },
       },
       ready: {
