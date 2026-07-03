@@ -71,7 +71,7 @@ No special setup is required. The service starts immediately with no wizards, cr
 | Mounted volumes | None |
 | Purpose | Blockchain API data through your own node |
 
-All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance at `mempool.startos:8080`, so no blockchain queries leave your server.
+All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance over the internal LXC bridge (resolved at runtime and passed as `APP_MEMPOOL_IP`/`APP_MEMPOOL_PORT`), so no blockchain queries leave your server.
 
 The upstream UI's "View on local mempool" link is the one exception — it's a user-facing URL, not an internal call. `startos/main.ts` resolves Mempool's `webui` service interface and passes the result as `APP_MEMPOOL_EXTERNAL_URL`, preferring a public domain, then a public IP:port, then the `.local` mDNS address (empty string if none, which is a no-op upstream). Without it, the upstream image builds the link as `<this-app-host>:8080`, which is wrong on StartOS where each service has its own hostname.
 
@@ -92,7 +92,7 @@ Chainalysis address checks are routed through Tor via the tor-proxy sidecar for 
 | StartOS-Managed                                  | Upstream-Managed |
 | ------------------------------------------------ | ---------------- |
 | Mempool API connection (automatic)               | None             |
-| Tor proxy connection (automatic via tor.startos) | None             |
+| Tor proxy connection (automatic)                 | None             |
 
 No user configuration is needed. Both connections are set automatically via environment variables.
 
@@ -131,7 +131,7 @@ The `main` volume is backed up.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development workflow.
+Build with `npm ci && make`. See the [StartOS packaging guide](https://docs.start9.com/packaging) for the full development workflow.
 
 ---
 
