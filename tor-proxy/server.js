@@ -3,16 +3,14 @@ const https = require("https");
 const { SocksProxyAgent } = require("socks-proxy-agent");
 
 const PORT = parseInt(process.env.PORT || "3001", 10);
-const TOR_PROXY_IP = process.env.TOR_PROXY_IP || "tor.startos";
-const TOR_PROXY_PORT = parseInt(process.env.TOR_PROXY_PORT || "9050", 10);
+// Tor's SOCKS bridge address (`<osIp>:9050`), injected by startos/main.ts.
+const TOR_SOCKS = process.env.TOR_SOCKS || "127.0.0.1:9050";
 const UPSTREAM_BASE =
   process.env.UPSTREAM_BASE ||
   "https://chainalysis-proxy.copexit.workers.dev";
 
 // socks5h:// means the SOCKS proxy handles DNS resolution (no DNS leak)
-const agent = new SocksProxyAgent(
-  `socks5h://${TOR_PROXY_IP}:${TOR_PROXY_PORT}`
-);
+const agent = new SocksProxyAgent(`socks5h://${TOR_SOCKS}`);
 
 // Supports mainnet (1/3/bc1), testnet/signet (m/n/2/tb1)
 const ADDR_RE = /^\/chainalysis\/address\/([13mn2][a-km-zA-HJ-NP-Z1-9]{25,34}|(bc1|tb1)[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{39,87})$/;
@@ -102,7 +100,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Tor proxy sidecar listening on port ${PORT}`);
-  console.log(`Routing via socks5h://${TOR_PROXY_IP}:${TOR_PROXY_PORT}`);
+  console.log(`Routing via socks5h://${TOR_SOCKS}`);
 });
 
 // Graceful shutdown

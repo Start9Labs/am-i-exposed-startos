@@ -1,6 +1,11 @@
+import {
+  mainHostId as mempoolHostId,
+  uiPort as mempoolUiPort,
+} from 'mempool-startos/startos/utils'
+import { socksHostId, socksPort } from 'tor-startos/startos/utils'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { torProxyPort, uiPort } from './utils'
+import { bridgeAddress, torProxyPort, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting Am I Exposed?'))
@@ -22,53 +27,55 @@ export const main = sdk.setupMain(async ({ effects }) => {
     throw new Error('Waiting for Mempool to be reachable')
   }
 
-  // The app queries Mempool over the LXC bridge (APP_MEMPOOL_IP), and links out
-  // to it via a public-facing URL — a public domain, then a public IP, then the
-  // mDNS .local address (empty string is a no-op upstream). Both come from
-  // Mempool's `webui` host; am-i-exposed has no compile-time handle on Mempool's
-  // host ids, so resolve the host id once from the interface, then subscribe so
-  // the addresses re-fire when they change.
-  const webuiHostId = (
-    await effects.getServiceInterface({
-      packageId: 'mempool',
-      serviceInterfaceId: 'webui',
-    })
-  )?.addressInfo?.hostId
-  const mempool = webuiHostId
-    ? await sdk.host
-        .get(effects, { hostId: webuiHostId, packageId: 'mempool' }, (host) => {
-          const addr =
-            host &&
-            Object.values(host.bindings)
-              .flatMap((b) => Object.values(b.interfaces))
-              .find((i) => i.id === 'webui')?.addressInfo
-          if (!addr) return null
-          const h = addr.filter({
-            kind: 'bridge',
-            predicate: (h) => h.metadata.kind === 'ipv4' && !h.ssl,
-          }).hostnames[0]
-          return {
-            bridge:
-              h && h.port != null ? { ip: h.hostname, port: h.port } : undefined,
-            externalUrl:
-              addr
-                .filter({ visibility: 'public', kind: 'domain' })
-                .format()[0] ??
-              addr
-                .filter({ visibility: 'public', kind: 'ip' })
-                .format()[0] ??
-              addr.filter({ kind: 'mdns' }).format()[0] ??
-              '',
-          }
-        })
-        .const()
-    : null
-  if (!mempool?.bridge) {
+  // The app proxies its `/api` calls to Mempool's webui over the LXC bridge
+  // (APP_MEMPOOL_IP/APP_MEMPOOL_PORT). A doctrine-v3 `.const()` on just the
+  // bridge address: a Mempool update is 0 restarts, install/uninstall/port
+  // change is one healing restart. The status gate above already blocks until
+  // the binding exists, so this only heals on a later port change.
+  const mempoolBridge = await bridgeAddress(effects, {
+    packageId: 'mempool',
+    hostId: mempoolHostId,
+    internalPort: mempoolUiPort,
+  }).const()
+  if (!mempoolBridge) {
     throw new Error('Waiting for Mempool to be reachable')
   }
+  const [mempoolIp, mempoolPort] = mempoolBridge.split(':')
 
-  // tor's SOCKS proxy is not a StartOS binding — reach it via tor's container IP.
-  const torIp = await sdk.getContainerIp(effects, { packageId: 'tor' }).const()
+  // The upstream UI also links out to Mempool via a public-facing URL
+  // (APP_MEMPOOL_EXTERNAL_URL) — a public domain, then a public IP, then the
+  // mDNS .local address (empty string is a no-op upstream). A separate
+  // `.const()` on the same host, mapped to just that URL, so it fires only when
+  // the browser-facing address changes (a rare, user-driven event), never on a
+  // Mempool update.
+  const mempoolExternalUrl = await sdk.host
+    .get(effects, { hostId: mempoolHostId, packageId: 'mempool' }, (host) => {
+      const addr =
+        host &&
+        Object.values(host.bindings)
+          .flatMap((b) => Object.values(b.interfaces))
+          .find((i) => i.id === 'webui')?.addressInfo
+      if (!addr) return ''
+      return (
+        addr.filter({ visibility: 'public', kind: 'domain' }).format()[0] ??
+        addr.filter({ visibility: 'public', kind: 'ip' }).format()[0] ??
+        addr.filter({ kind: 'mdns' }).format()[0] ??
+        ''
+      )
+    })
+    .const()
+
+  // Tor's SOCKS proxy over the bridge, handed to the tor-proxy sidecar as
+  // TOR_SOCKS. With the 9050 fallback the mapped value stays constant across
+  // tor install/update/uninstall, so this `.const()` never restarts on tor
+  // churn; a dead bridge address is just connection-refused, so routing
+  // Chainalysis lookups through it is always safe.
+  const torSocks = await bridgeAddress(effects, {
+    packageId: 'tor',
+    hostId: socksHostId,
+    internalPort: socksPort,
+    fallbackPort: socksPort,
+  }).const()
 
   return sdk.Daemons.of(effects)
     .addDaemon('tor-proxy', {
@@ -82,8 +89,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
         command: sdk.useEntrypoint(),
         env: {
           PORT: String(torProxyPort),
-          TOR_PROXY_IP: torIp,
-          TOR_PROXY_PORT: '9050',
+          TOR_SOCKS: torSocks,
         },
       },
       ready: {
@@ -111,12 +117,12 @@ export const main = sdk.setupMain(async ({ effects }) => {
       exec: {
         command: sdk.useEntrypoint(),
         env: {
-          APP_MEMPOOL_IP: mempool.bridge.ip,
-          APP_MEMPOOL_PORT: String(mempool.bridge.port),
+          APP_MEMPOOL_IP: mempoolIp,
+          APP_MEMPOOL_PORT: mempoolPort,
           APP_TOR_PROXY_IP: '127.0.0.1',
           APP_TOR_PROXY_PORT: String(torProxyPort),
           APP_MEMPOOL_HIDDEN_SERVICE: '',
-          APP_MEMPOOL_EXTERNAL_URL: mempool.externalUrl,
+          APP_MEMPOOL_EXTERNAL_URL: mempoolExternalUrl,
         },
       },
       ready: {

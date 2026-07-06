@@ -161,8 +161,7 @@ startos_managed_env_vars:
     - APP_MEMPOOL_EXTERNAL_URL
   tor-proxy:
     - PORT
-    - TOR_PROXY_IP
-    - TOR_PROXY_PORT
+    - TOR_SOCKS
 actions: []
 health_checks:
   - port_listening: 3001

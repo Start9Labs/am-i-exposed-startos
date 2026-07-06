@@ -6,7 +6,9 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@start9labs/start-sdk": "2.0.1"
+    "@start9labs/start-sdk": "2.0.1",
+    "mempool-startos": "github:Start9Labs/mempool-startos#next",
+    "tor-startos": "github:Start9Labs/tor-startos#next"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
