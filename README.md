@@ -34,10 +34,10 @@
 
 ## Container Runtime
 
-| Image       | Source                                             | Purpose                              |
-| ----------- | -------------------------------------------------- | ------------------------------------ |
-| main        | `ghcr.io/copexit/am-i-exposed-umbrel`              | Nginx serving static frontend + API proxy |
-| tor-proxy   | Custom build (`tor-proxy/Dockerfile`)              | HTTP-to-SOCKS bridge for Chainalysis lookups |
+| Image     | Source                                | Purpose                                      |
+| --------- | ------------------------------------- | -------------------------------------------- |
+| main      | `ghcr.io/copexit/am-i-exposed-umbrel` | Nginx serving static frontend + API proxy    |
+| tor-proxy | Custom build (`tor-proxy/Dockerfile`) | HTTP-to-SOCKS bridge for Chainalysis lookups |
 
 Architectures: x86_64, aarch64
 
@@ -55,21 +55,21 @@ No special setup is required. The service starts immediately with no wizards, cr
 
 ## Network Interfaces
 
-| Interface | Port | Protocol | Purpose                          |
-| --------- | ---- | -------- | -------------------------------- |
-| Web UI    | 8080 | HTTP     | Privacy scanner web application  |
+| Interface | Port | Protocol | Purpose                         |
+| --------- | ---- | -------- | ------------------------------- |
+| Web UI    | 8080 | HTTP     | Privacy scanner web application |
 
 ## Dependencies
 
 ### Mempool (required)
 
-| Property | Value |
-|----------|-------|
-| Version constraint | `>= 3.2.1` |
-| Required state | Running |
-| Health checks | `webui` |
-| Mounted volumes | None |
-| Purpose | Blockchain API data through your own node |
+| Property           | Value                                     |
+| ------------------ | ----------------------------------------- |
+| Version constraint | `>= 3.2.1`                                |
+| Required state     | Running                                   |
+| Health checks      | `webui`                                   |
+| Mounted volumes    | None                                      |
+| Purpose            | Blockchain API data through your own node |
 
 All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance over the internal LXC bridge (resolved at runtime and passed as `APP_MEMPOOL_IP`/`APP_MEMPOOL_PORT`), so no blockchain queries leave your server.
 
@@ -77,22 +77,22 @@ The upstream UI's "View on local mempool" link is the one exception — it's a u
 
 ### Tor (required)
 
-| Property | Value |
-|----------|-------|
-| Version constraint | `>= 0.4.9.5` |
-| Required state | Running |
-| Health checks | `tor` |
-| Mounted volumes | None |
-| Purpose | SOCKS5 proxy for private Chainalysis address lookups |
+| Property           | Value                                                |
+| ------------------ | ---------------------------------------------------- |
+| Version constraint | `>= 0.4.9.5`                                         |
+| Required state     | Running                                              |
+| Health checks      | `tor`                                                |
+| Mounted volumes    | None                                                 |
+| Purpose            | SOCKS5 proxy for private Chainalysis address lookups |
 
 Chainalysis address checks are routed through Tor via the tor-proxy sidecar for private surveillance database lookups.
 
 ## Configuration Management
 
-| StartOS-Managed                                  | Upstream-Managed |
-| ------------------------------------------------ | ---------------- |
-| Mempool API connection (automatic)               | None             |
-| Tor proxy connection (automatic)                 | None             |
+| StartOS-Managed                    | Upstream-Managed |
+| ---------------------------------- | ---------------- |
+| Mempool API connection (automatic) | None             |
+| Tor proxy connection (automatic)   | None             |
 
 No user configuration is needed. Both connections are set automatically via environment variables.
 
@@ -106,10 +106,10 @@ The `main` volume is backed up.
 
 ## Health Checks
 
-| Check         | Method                  | Display | Messages                            |
-| ------------- | ----------------------- | ------- | ----------------------------------- |
-| Tor Proxy     | Port listening (3001)   | Hidden  | Ready: "Tor proxy is ready"        |
-| Web Interface | Port listening (8080)   | Shown   | Ready: "The web interface is ready" |
+| Check         | Method                | Display | Messages                            |
+| ------------- | --------------------- | ------- | ----------------------------------- |
+| Tor Proxy     | Port listening (3001) | Hidden  | Ready: "Tor proxy is ready"         |
+| Web Interface | Port listening (8080) | Shown   | Ready: "The web interface is ready" |
 
 ## Limitations and Differences
 
