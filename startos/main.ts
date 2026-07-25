@@ -5,7 +5,7 @@ import {
 import { socksHostId, socksPort } from 'tor-startos/startos/utils'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { bridgeAddress, torProxyPort, uiPort } from './utils'
+import { torProxyPort, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting Am I Exposed?'))
@@ -32,11 +32,14 @@ export const main = sdk.setupMain(async ({ effects }) => {
   // bridge address: a Mempool update is 0 restarts, install/uninstall/port
   // change is one healing restart. The status gate above already blocks until
   // the binding exists, so this only heals on a later port change.
-  const mempoolBridge = await bridgeAddress(effects, {
-    packageId: 'mempool',
-    hostId: mempoolHostId,
-    internalPort: mempoolUiPort,
-  }).const()
+  const mempoolBridge = await sdk.host
+    .getBridgeAddress(effects, {
+      packageId: 'mempool',
+      hostId: mempoolHostId,
+      internalPort: mempoolUiPort,
+      ssl: false,
+    })
+    .const()
   if (!mempoolBridge) {
     throw new Error('Waiting for Mempool to be reachable')
   }
@@ -70,12 +73,14 @@ export const main = sdk.setupMain(async ({ effects }) => {
   // tor install/update/uninstall, so this `.const()` never restarts on tor
   // churn; a dead bridge address is just connection-refused, so routing
   // Chainalysis lookups through it is always safe.
-  const torSocks = await bridgeAddress(effects, {
-    packageId: 'tor',
-    hostId: socksHostId,
-    internalPort: socksPort,
-    fallbackPort: socksPort,
-  }).const()
+  const torSocks = await sdk.host
+    .getBridgeAddress(effects, {
+      packageId: 'tor',
+      hostId: socksHostId,
+      internalPort: socksPort,
+      fallbackPort: socksPort,
+    })
+    .const()
 
   return sdk.Daemons.of(effects)
     .addDaemon('tor-proxy', {

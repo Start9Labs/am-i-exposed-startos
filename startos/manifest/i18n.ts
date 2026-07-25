@@ -1,9 +1,14 @@
 export const short = {
-  en_US: 'Bitcoin privacy scanner - find out what the blockchain reveals about you',
-  es_ES: 'Escáner de privacidad Bitcoin: descubre lo que la blockchain revela sobre ti',
-  de_DE: 'Bitcoin-Privatsphäre-Scanner – finde heraus, was die Blockchain über dich verrät',
-  pl_PL: 'Skaner prywatności Bitcoin – sprawdź, co blockchain ujawnia na Twój temat',
-  fr_FR: 'Scanner de confidentialité Bitcoin – découvrez ce que la blockchain révèle sur vous',
+  en_US:
+    'Bitcoin privacy scanner - find out what the blockchain reveals about you',
+  es_ES:
+    'Escáner de privacidad Bitcoin: descubre lo que la blockchain revela sobre ti',
+  de_DE:
+    'Bitcoin-Privatsphäre-Scanner – finde heraus, was die Blockchain über dich verrät',
+  pl_PL:
+    'Skaner prywatności Bitcoin – sprawdź, co blockchain ujawnia na Twój temat',
+  fr_FR:
+    'Scanner de confidentialité Bitcoin – découvrez ce que la blockchain révèle sur vous',
 }
 
 export const long = {
