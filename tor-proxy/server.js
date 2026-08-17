@@ -1,112 +1,119 @@
-const http = require("http");
-const https = require("https");
-const { SocksProxyAgent } = require("socks-proxy-agent");
+const http = require('http')
+const https = require('https')
+const { SocksProxyAgent } = require('socks-proxy-agent')
 
-const PORT = parseInt(process.env.PORT || "3001", 10);
+const PORT = parseInt(process.env.PORT || '3001', 10)
 // Tor's SOCKS bridge address (`<osIp>:9050`), injected by startos/main.ts.
-const TOR_SOCKS = process.env.TOR_SOCKS || "127.0.0.1:9050";
+const TOR_SOCKS = process.env.TOR_SOCKS || '127.0.0.1:9050'
 const UPSTREAM_BASE =
-  process.env.UPSTREAM_BASE ||
-  "https://chainalysis-proxy.copexit.workers.dev";
+  process.env.UPSTREAM_BASE || 'https://chainalysis-proxy.copexit.workers.dev'
 
 // socks5h:// means the SOCKS proxy handles DNS resolution (no DNS leak)
-const agent = new SocksProxyAgent(`socks5h://${TOR_SOCKS}`);
+const agent = new SocksProxyAgent(`socks5h://${TOR_SOCKS}`)
 
 // Supports mainnet (1/3/bc1), testnet/signet (m/n/2/tb1)
-const ADDR_RE = /^\/chainalysis\/address\/([13mn2][a-km-zA-HJ-NP-Z1-9]{25,34}|(bc1|tb1)[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{39,87})$/;
-const REQUEST_TIMEOUT_MS = 30_000;
-const MAX_RESPONSE_BYTES = 1024 * 1024; // 1 MB limit to prevent memory exhaustion
+const ADDR_RE =
+  /^\/chainalysis\/address\/([13mn2][a-km-zA-HJ-NP-Z1-9]{25,34}|(bc1|tb1)[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{39,87})$/
+const REQUEST_TIMEOUT_MS = 30_000
+const MAX_RESPONSE_BYTES = 1024 * 1024 // 1 MB limit to prevent memory exhaustion
 
 function fetchViaAgent(url) {
   return new Promise((resolve, reject) => {
-    const parsed = new URL(url);
+    const parsed = new URL(url)
     const req = https.request(
       {
         hostname: parsed.hostname,
         port: parsed.port || 443,
         path: parsed.pathname + parsed.search,
-        method: "GET",
+        method: 'GET',
         agent,
-        headers: { Accept: "application/json" },
+        headers: { Accept: 'application/json' },
         timeout: REQUEST_TIMEOUT_MS,
       },
       (res) => {
-        const chunks = [];
-        let totalBytes = 0;
-        res.on("data", (chunk) => {
-          totalBytes += chunk.length;
+        const chunks = []
+        let totalBytes = 0
+        res.on('data', (chunk) => {
+          totalBytes += chunk.length
           if (totalBytes > MAX_RESPONSE_BYTES) {
-            req.destroy();
-            reject(new Error("Upstream response too large"));
-            return;
+            req.destroy()
+            reject(new Error('Upstream response too large'))
+            return
           }
-          chunks.push(chunk);
-        });
-        res.on("end", () => {
-          const body = Buffer.concat(chunks).toString();
+          chunks.push(chunk)
+        })
+        res.on('end', () => {
+          const body = Buffer.concat(chunks).toString()
           if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(body);
+            resolve(body)
           } else {
-            reject(new Error(`Upstream ${res.statusCode}: ${body.slice(0, 200)}`));
+            reject(
+              new Error(`Upstream ${res.statusCode}: ${body.slice(0, 200)}`),
+            )
           }
-        });
-      }
-    );
-    req.on("error", reject);
-    req.on("timeout", () => {
-      req.destroy();
-      reject(new Error("Upstream request timed out"));
-    });
-    req.end();
-  });
+        })
+      },
+    )
+    req.on('error', reject)
+    req.on('timeout', () => {
+      req.destroy()
+      reject(new Error('Upstream request timed out'))
+    })
+    req.end()
+  })
 }
 
 const server = http.createServer(async (req, res) => {
   // Health check
-  if (req.url === "/health") {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("ok");
-    return;
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' })
+    res.end('ok')
+    return
   }
 
-  if (req.method !== "GET") {
-    res.writeHead(405, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Method not allowed" }));
-    return;
+  if (req.method !== 'GET') {
+    res.writeHead(405, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ error: 'Method not allowed' }))
+    return
   }
 
-  const match = req.url.match(ADDR_RE);
+  const match = req.url.match(ADDR_RE)
   if (!match) {
-    res.writeHead(400, { "Content-Type": "application/json" });
+    res.writeHead(400, { 'Content-Type': 'application/json' })
     res.end(
-      JSON.stringify({ error: "Invalid path. Use /chainalysis/address/{btc_address}" })
-    );
-    return;
+      JSON.stringify({
+        error: 'Invalid path. Use /chainalysis/address/{btc_address}',
+      }),
+    )
+    return
   }
 
-  const address = match[1];
-  const upstreamUrl = `${UPSTREAM_BASE}/address/${address}`;
+  const address = match[1]
+  const upstreamUrl = `${UPSTREAM_BASE}/address/${address}`
 
   try {
-    const body = await fetchViaAgent(upstreamUrl);
-    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
-    res.end(body);
+    const body = await fetchViaAgent(upstreamUrl)
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+    })
+    res.end(body)
   } catch (err) {
-    console.error(`Tor proxy error: ${err.message}`);
-    res.writeHead(502, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Tor proxy upstream request failed" }));
+    console.error(`Tor proxy error: ${err.message}`)
+    res.writeHead(502, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ error: 'Tor proxy upstream request failed' }))
   }
-});
+})
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Tor proxy sidecar listening on port ${PORT}`);
-  console.log(`Routing via socks5h://${TOR_SOCKS}`);
-});
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Tor proxy sidecar listening on port ${PORT}`)
+  console.log(`Routing via socks5h://${TOR_SOCKS}`)
+})
 
 // Graceful shutdown
 function shutdown() {
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(1), 5000);
+  server.close(() => process.exit(0))
+  setTimeout(() => process.exit(1), 5000)
 }
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+process.on('SIGTERM', shutdown)
+process.on('SIGINT', shutdown)
