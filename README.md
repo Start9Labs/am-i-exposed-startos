@@ -4,134 +4,141 @@
 
 # Am I Exposed? on StartOS
 
-> **Upstream docs:** <https://github.com/Copexit/am-i-exposed>
->
 > Everything not listed in this document should behave the same as upstream
-> Am I Exposed?. If a feature, setting, or behavior is not mentioned
-> here, the upstream documentation is accurate and fully applicable.
+> Am I Exposed?. If a feature, setting, or behavior is not mentioned here, the
+> upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
 
-[Am I Exposed?](https://github.com/Copexit/am-i-exposed) is a client-side Bitcoin privacy analysis tool that grades your transactions and addresses using chain analysis heuristics — the same techniques used by surveillance firms. Paste any Bitcoin address or transaction ID and get a privacy score from 0 to 100 with a letter grade and actionable findings.
+[Am I Exposed?](https://github.com/Copexit/am-i-exposed) grades a Bitcoin address or transaction against the chain-analysis heuristics surveillance firms use. On StartOS every lookup it makes is sourced locally or anonymously: chain data comes from your own Mempool instance, and external database queries leave through a bundled Tor proxy.
+
+- **Upstream repo:** <https://github.com/Copexit/am-i-exposed>
+- **Wrapper repo:** <https://github.com/Start9Labs/am-i-exposed-startos>
 
 ---
 
 ## Table of Contents
 
-- [Container Runtime](#container-runtime)
-- [Volumes](#volumes)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Interfaces](#network-interfaces)
+- [Image and Container Runtime](#image-and-container-runtime)
+- [Volume and Data Layout](#volume-and-data-layout)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
 - [Actions](#actions)
-- [Backups](#backups)
+- [Tasks](#tasks)
 - [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
-- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
-## Container Runtime
+## Image and Container Runtime
 
-| Image     | Source                                | Purpose                                      |
-| --------- | ------------------------------------- | -------------------------------------------- |
-| main      | `ghcr.io/copexit/am-i-exposed-umbrel` | Nginx serving static frontend + API proxy    |
-| tor-proxy | Custom build (`tor-proxy/Dockerfile`) | HTTP-to-SOCKS bridge for Chainalysis lookups |
+Two images and two long-running subcontainers: the upstream application, and a small proxy this repo builds because the application speaks HTTP and Tor speaks SOCKS.
 
-Architectures: x86_64, aarch64
+| Property      | Value                                                                       |
+| ------------- | --------------------------------------------------------------------------- |
+| Images        | `ghcr.io/copexit/am-i-exposed-umbrel`, plus a local build from `tor-proxy/` |
+| Architectures | x86_64, aarch64                                                             |
+| Entrypoint    | Each image's own                                                            |
 
-The main image is the upstream Umbrel build — a static Next.js export served by nginx, with a reverse proxy to route `/api/*` requests to the local Mempool instance. The tor-proxy sidecar forwards Chainalysis address checks through Tor's SOCKS5 proxy for private surveillance database lookups.
+| Subcontainer | Image       | Purpose                                                                        |
+| ------------ | ----------- | ------------------------------------------------------------------------------ |
+| `main`       | upstream    | The `primary` daemon — the analyzer and its web UI, and the one to `attach` to |
+| `tor-proxy`  | local build | A Node HTTP-to-SOCKS shim that forwards outbound lookups into Tor's SOCKS port |
 
-## Volumes
+`primary` requires `tor-proxy`, so the shim is listening before the application can make its first external request.
 
-| Volume | Mount Point | Purpose         |
-| ------ | ----------- | --------------- |
-| `main` | `/data`     | Persistent data |
+## Volume and Data Layout
 
-## Installation and First-Run Flow
+One volume, mounted only into the application.
 
-No special setup is required. The service starts immediately with no wizards, credentials, or initial configuration. Both the Mempool and Tor dependencies must be installed and running.
+| Volume | Mount Point | Purpose                          |
+| ------ | ----------- | -------------------------------- |
+| `main` | `/data`     | The application's data directory |
 
-## Network Interfaces
+The `tor-proxy` subcontainer mounts nothing — it holds no state and is configured entirely by environment.
 
-| Interface | Port | Protocol | Purpose                         |
-| --------- | ---- | -------- | ------------------------------- |
-| Web UI    | 8080 | HTTP     | Privacy scanner web application |
+## File Models
+
+None. The package writes no configuration file: everything it needs to tell the application is passed as environment on each start, and it keeps no `store.json`. There is nothing on disk to inspect or correct.
+
+Both subcontainers are configured this way:
+
+| Variable                                 | Subcontainer | Value                                                              |
+| ---------------------------------------- | ------------ | ------------------------------------------------------------------ |
+| `PORT`, `TOR_SOCKS`                      | `tor-proxy`  | The shim's own port, and Tor's SOCKS address on the service bridge |
+| `APP_MEMPOOL_IP`, `APP_MEMPOOL_PORT`     | `main`       | Mempool's web UI, split out of its bridge address                  |
+| `APP_TOR_PROXY_IP`, `APP_TOR_PROXY_PORT` | `main`       | The shim, on loopback inside the service                           |
+| `APP_MEMPOOL_EXTERNAL_URL`               | `main`       | A browser-reachable address for Mempool — see below                |
+| `APP_MEMPOOL_HIDDEN_SERVICE`             | `main`       | Always empty; the onion variant is not used                        |
+
+`APP_MEMPOOL_EXTERNAL_URL` is what the results page's "view on local mempool" links point at, so unlike the others it has to be an address _your browser_ can reach, not one the container can. The package picks the first of Mempool's public domain, its public IP, or its mDNS `.local` name, and passes an empty string if it has none — which upstream treats as "no link" rather than a broken one.
 
 ## Dependencies
 
-### Mempool (required)
+Two, both required, and each is required in the strong sense: the service will not run without them.
 
-| Property           | Value                                     |
-| ------------------ | ----------------------------------------- |
-| Version constraint | Declared in `startos/dependencies.ts`     |
-| Required state     | Running                                   |
-| Health checks      | `webui`                                   |
-| Mounted volumes    | None                                      |
-| Purpose            | Blockchain API data through your own node |
+| Dependency | Kind      | Health check | Mounts | Why                                                            |
+| ---------- | --------- | ------------ | ------ | -------------------------------------------------------------- |
+| Mempool    | `running` | `webui`      | none   | All chain data, queried from your node instead of a public API |
+| Tor        | `running` | `tor`        | none   | Outbound lookups against external surveillance databases       |
 
-All `/api/*` requests from the browser are reverse-proxied by nginx to the local Mempool instance over the internal LXC bridge (resolved at runtime and passed as `APP_MEMPOOL_IP`/`APP_MEMPOOL_PORT`), so no blockchain queries leave your server.
+Both are reached at addresses resolved from their own bindings over the service bridge, so nothing needs configuring and a dependency's update does not move its address.
 
-The upstream UI's "View on local mempool" link is the one exception — it's a user-facing URL, not an internal call. `startos/main.ts` resolves Mempool's `webui` service interface and passes the result as `APP_MEMPOOL_EXTERNAL_URL`, preferring a public domain, then a public IP:port, then the `.local` mDNS address (empty string if none, which is a no-op upstream). Without it, the upstream image builds the link as `<this-app-host>:8080`, which is wrong on StartOS where each service has its own hostname.
+**The service holds while Mempool is unhealthy, and restarts itself when Mempool returns.** The application connects to Mempool once at startup and never reconnects on its own, so a Mempool restart — an update, for instance — would otherwise leave the UI reporting Mempool unreachable until someone restarted this service by hand. It refuses to run while Mempool's `webui` check is not passing, and comes back on its own when it is.
 
-### Tor (required)
+## Network Access and Interfaces
 
-| Property           | Value                                                |
-| ------------------ | ---------------------------------------------------- |
-| Version constraint | Declared in `startos/dependencies.ts`                |
-| Required state     | Running                                              |
-| Health checks      | `tor`                                                |
-| Mounted volumes    | None                                                 |
-| Purpose            | SOCKS5 proxy for private Chainalysis address lookups |
+One interface. Nothing is exported for dependent services, and the Tor shim is never published.
 
-Chainalysis address checks are routed through Tor via the tor-proxy sidecar for private surveillance database lookups.
+| Interface | Id   | Type | Port | Description                     |
+| --------- | ---- | ---- | ---- | ------------------------------- |
+| Web UI    | `ui` | ui   | 8080 | The Am I Exposed? web interface |
 
-## Configuration Management
+The port is bound on the `ui-multi` MultiHost and is not masked. The shim listens on loopback inside the service only.
 
-| StartOS-Managed                    | Upstream-Managed |
-| ---------------------------------- | ---------------- |
-| Mempool API connection (automatic) | None             |
-| Tor proxy connection (automatic)   | None             |
+## Installation and First-Run Flow
 
-No user configuration is needed. Both connections are set automatically via environment variables.
+Nothing is generated, asked, or bootstrapped at install, and no task is raised. There is one ordering constraint, and it comes from the dependency gate rather than from setup: **Mempool must be installed and running, with its web UI healthy, before this service will start.** Until then the service holds rather than starting into an error state.
+
+Tor must be installed and running too, but it is not gated the same way: its address resolves to a fixed fallback port, so a missing Tor surfaces as external lookups failing rather than as a service that will not start.
 
 ## Actions
 
 None.
 
-## Backups
+## Tasks
 
-The `main` volume is backed up.
+None. This package raises no tasks, so the service is never held on a prompt and its ordinary controls are always available.
 
 ## Health Checks
 
-| Check         | Method                | Display | Messages                            |
-| ------------- | --------------------- | ------- | ----------------------------------- |
-| Tor Proxy     | Port listening (3001) | Hidden  | Ready: "Tor proxy is ready"         |
-| Web Interface | Port listening (8080) | Shown   | Ready: "The web interface is ready" |
+Two checks, but only one is shown to you.
+
+| Check       | Displayed       | Method                       | Grace Period |
+| ----------- | --------------- | ---------------------------- | ------------ |
+| `primary`   | "Web Interface" | Port 8080 is listening       | SDK default  |
+| `tor-proxy` | — internal      | The shim's port is listening | SDK default  |
+
+**`primary` failing** means the analyzer is not serving. Because it cannot start until Mempool is healthy, a failure here after a period of running points at the application rather than at a dependency.
+
+**`tor-proxy` has `display: null`** — it exists so that a dead shim restarts the service, not to be read. A service that keeps restarting with no failing check on screen is this one failing; the service logs name it.
+
+## Backups and Restore
+
+The `main` volume is copied wholesale — `sdk.Backups.ofVolumes('main')`. No dump step and nothing excluded.
+
+The tool holds no accounts and no user data of consequence: analysis is performed per request against Mempool, so a restored instance is functionally indistinguishable from a fresh install, and needs its two dependencies present before it will start either way.
 
 ## Limitations and Differences
 
-1. **Mempool explorer links** — The `/api/local-info` endpoint returns empty values for `mempoolOnion` since Tor is handled differently on StartOS.
-
-## What Is Unchanged from Upstream
-
-- All 31 heuristics and 14 chain analysis modules
-- CoinJoin detection (Whirlpool, WabiSabi, JoinMarket)
-- Boltzmann entropy calculation via WebAssembly
-- Wallet fingerprinting and entity matching
-- Chainalysis address exposure checks (via Tor proxy)
-- Privacy scoring (0–100 with letter grades A+ to F)
-- Support for mainnet, testnet4, and signet
-- 100% client-side analysis in browser
-- All 5 language translations (EN, ES, DE, FR, PT)
-
----
-
-## Contributing
-
-Build with `npm ci && make`. See the [StartOS packaging guide](https://docs.start9.com/packaging) for the full development workflow.
+1. **Mempool and Tor are both required.** Neither can be pointed at an external instance — the addresses come from the local dependency's own bindings.
+2. **The service will not start while Mempool's web UI is unhealthy**, by design, rather than starting and reporting an unreachable backend.
+3. **The onion route to Mempool is not used.** `APP_MEMPOOL_HIDDEN_SERVICE` is always empty; the application reaches Mempool over the local bridge instead, which is faster and no less private.
+4. **External lookups are Tor-only.** They go through the bundled shim into Tor's SOCKS proxy, and fail rather than falling back to clearnet if Tor is not running.
+5. **No riscv64 build.** x86_64 and aarch64 only.
 
 ---
 
@@ -139,33 +146,33 @@ Build with `npm ci && make`. See the [StartOS packaging guide](https://docs.star
 
 ```yaml
 package_id: am-i-exposed
-images:
-  main: ghcr.io/copexit/am-i-exposed-umbrel
-  tor-proxy: custom build (tor-proxy/Dockerfile)
-architectures: [x86_64, aarch64]
+image: ghcr.io/copexit/am-i-exposed-umbrel # plus a local build from tor-proxy/
+architectures:
+  - x86_64
+  - aarch64
+subcontainers:
+  - main # the analyzer; the one to attach to
+  - tor-proxy # HTTP-to-SOCKS shim
 volumes:
   main: /data
-ports:
-  ui: 8080
-  tor-proxy: 3001 (internal)
-dependencies:
-  - mempool
-  - tor
+file_models: []
 startos_managed_env_vars:
-  main:
-    - APP_MEMPOOL_IP
-    - APP_MEMPOOL_PORT
-    - APP_TOR_PROXY_IP
-    - APP_TOR_PROXY_PORT
-    - APP_MEMPOOL_HIDDEN_SERVICE
-    - APP_MEMPOOL_EXTERNAL_URL
-  tor-proxy:
-    - PORT
-    - TOR_SOCKS
+  - PORT # tor-proxy
+  - TOR_SOCKS # tor-proxy
+  - APP_MEMPOOL_IP
+  - APP_MEMPOOL_PORT
+  - APP_TOR_PROXY_IP
+  - APP_TOR_PROXY_PORT
+  - APP_MEMPOOL_EXTERNAL_URL
+  - APP_MEMPOOL_HIDDEN_SERVICE # always empty
+dependencies:
+  - mempool # required; gated on its webui health check
+  - tor # required
+interfaces:
+  ui: { type: ui, port: 8080 }
 actions: []
+tasks: []
 health_checks:
-  - port_listening: 3001
-  - port_listening: 8080
-backup_volumes:
-  - main
+  - primary # displayed "Web Interface"
+  - tor-proxy # internal
 ```
