@@ -1,23 +1,33 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.35.8:3',
+  version: '0.35.8:4',
   releaseNotes: {
-    en_US: `Resolves the addresses of connected services more reliably.
+    en_US: `Updated the bundled Tor proxy to Node.js 24 LTS.
 
-Am I Exposed looked up where to reach its dependencies through a field that only applies to one of the two ways a service can publish a port. It now reads the address itself, so a dependency changing how it serves TLS can no longer leave Am I Exposed unable to find it. Nothing changes in normal operation.`,
-    es_ES: `Resuelve de forma más fiable las direcciones de los servicios conectados.
+This refreshes its runtime with current security, HTTP/TLS, stream, and performance fixes.
 
-Am I Exposed localizaba sus dependencias mediante un campo que solo se aplica a una de las dos formas en que un servicio puede publicar un puerto. Ahora lee la dirección en sí, de modo que si una dependencia cambia su forma de servir TLS, Am I Exposed seguirá encontrándola. En funcionamiento normal no cambia nada.`,
-    de_DE: `Ermittelt die Adressen verbundener Dienste zuverlässiger.
+Full Node.js 24 release notes: https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md`,
+    es_ES: `Se actualizó el proxy Tor incluido a Node.js 24 LTS.
 
-Am I Exposed suchte seine Abhängigkeiten über ein Feld, das nur für eine der beiden Arten gilt, auf die ein Dienst einen Port veröffentlichen kann. Jetzt wird die Adresse selbst gelesen, sodass eine Abhängigkeit, die ihre TLS-Bereitstellung ändert, für Am I Exposed auffindbar bleibt. Im normalen Betrieb ändert sich nichts.`,
-    pl_PL: `Pewniej ustala adresy połączonych usług.
+Esto renueva su entorno de ejecución con correcciones actuales de seguridad, HTTP/TLS, flujos y rendimiento.
 
-Am I Exposed wyszukiwał swoje zależności przez pole, które dotyczy tylko jednego z dwóch sposobów publikowania portu przez usługę. Teraz odczytuje sam adres, więc zależność zmieniająca sposób udostępniania TLS nadal pozostanie odnajdywalna dla Am I Exposed. W normalnej pracy nic się nie zmienia.`,
-    fr_FR: `Détermine plus fiablement les adresses des services connectés.
+Notas completas de la versión Node.js 24: https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md`,
+    de_DE: `Der enthaltene Tor-Proxy wurde auf Node.js 24 LTS aktualisiert.
 
-Am I Exposed localisait ses dépendances via un champ qui ne s'applique qu'à l'un des deux modes de publication d'un port par un service. Il lit désormais l'adresse elle-même : une dépendance qui change sa façon de servir TLS reste donc trouvable par Am I Exposed. Rien ne change en fonctionnement normal.`,
+Damit erhält seine Laufzeitumgebung aktuelle Sicherheits-, HTTP/TLS-, Stream- und Leistungsverbesserungen.
+
+Vollständige Versionshinweise zu Node.js 24: https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md`,
+    pl_PL: `Wbudowany serwer proxy Tor zaktualizowano do Node.js 24 LTS.
+
+Jego środowisko uruchomieniowe otrzymuje aktualne poprawki bezpieczeństwa, HTTP/TLS, strumieni i wydajności.
+
+Pełne informacje o wydaniu Node.js 24: https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md`,
+    fr_FR: `Le proxy Tor intégré a été mis à jour vers Node.js 24 LTS.
+
+Son environnement d'exécution bénéficie ainsi des correctifs actuels de sécurité, HTTP/TLS, flux et performances.
+
+Notes de version complètes de Node.js 24 : https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md`,
   },
   migrations: {
     up: async ({ effects }) => {},
