@@ -24,3 +24,7 @@ Am I Exposed? requires two dependencies — install and start each before launch
 Paste an address, xpub, or transaction id and the tool walks you through what an outside observer could infer about it.
 
 Results that link to **View on local mempool** open your own Mempool service — using its public address if you have one set up, otherwise its `.local` address (reachable from your home network).
+
+The **CoinJoin Observatory** shows Whirlpool activity and WabiSabi coordinator statistics. Its data is fetched from external sources through the Tor proxy. Links to those sources open outside the app.
+
+Chainalysis checks also use Tor. If a check fails, the UI asks before making a direct lookup that exposes your browser's IP address; cancel to keep the lookup private. Analysis settings, bookmarks and saved graphs stay in your browser and are not included in the service backup.
