@@ -9,7 +9,7 @@
 > upstream documentation is accurate and fully applicable — see the
 > Documentation section of `instructions.md` for links.
 
-[Am I Exposed?](https://github.com/Copexit/am-i-exposed) grades a Bitcoin address or transaction against the chain-analysis heuristics surveillance firms use. On StartOS chain data comes from your own Mempool instance; external database queries use the bundled Tor proxy. The Chainalysis UI offers a direct lookup only after explicit confirmation if Tor fails.
+[Am I Exposed?](https://github.com/Copexit/am-i-exposed) grades a Bitcoin address or transaction against the chain-analysis heuristics surveillance firms use. On StartOS chain data comes from your own Mempool instance; external database queries use the bundled Tor proxy.
 
 - **Upstream repo:** <https://github.com/Copexit/am-i-exposed>
 - **Wrapper repo:** <https://github.com/Start9Labs/am-i-exposed-startos>
@@ -54,8 +54,8 @@ Two images and two long-running subcontainers: the upstream application, and a s
 
 One volume, mounted only into the application.
 
-| Volume | Mount Point | Purpose                          |
-| ------ | ----------- | -------------------------------- |
+| Volume | Mount Point | Purpose                                                                    |
+| ------ | ----------- | -------------------------------------------------------------------------- |
 | `main` | `/data`     | Reserved application data path; the web app stores settings in the browser |
 
 The `tor-proxy` subcontainer mounts nothing — it holds no state and is configured entirely by environment. Analysis settings, bookmarks, saved graphs, and Observatory responses are stored in the browser (localStorage/IndexedDB), not in the service volume.
@@ -137,7 +137,7 @@ The server holds no accounts; analysis is performed per request against Mempool.
 1. **Mempool and Tor are both required.** Neither can be pointed at an external instance — the addresses come from the local dependency's own bindings.
 2. **The service will not start while Mempool's web UI is unhealthy**, by design, rather than starting and reporting an unreachable backend.
 3. **The onion route to Mempool is not used.** `APP_MEMPOOL_HIDDEN_SERVICE` is always empty; the application reaches Mempool over the local bridge instead, which is faster and no less private.
-4. **CoinJoin Observatory data and Chainalysis checks use Tor.** The bundled shim forwards them to their external sources through Tor's SOCKS proxy. If a Chainalysis check fails, the UI offers a separate, explicitly confirmed direct lookup that exposes the browser's IP address; cancel to stay on Tor.
+4. **External lookups are Tor-only.** Chainalysis checks and CoinJoin Observatory data go through the bundled shim into Tor's SOCKS proxy, and fail rather than falling back to clearnet if Tor is not running.
 5. **No riscv64 build.** x86_64 and aarch64 only.
 
 ---

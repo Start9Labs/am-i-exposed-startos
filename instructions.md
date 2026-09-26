@@ -27,4 +27,4 @@ Results that link to **View on local mempool** open your own Mempool service —
 
 The **CoinJoin Observatory** shows Whirlpool activity and WabiSabi coordinator statistics. Its data is fetched from external sources through the Tor proxy. Links to those sources open outside the app.
 
-Chainalysis checks also use Tor. If a check fails, the UI asks before making a direct lookup that exposes your browser's IP address; cancel to keep the lookup private. Analysis settings, bookmarks and saved graphs stay in your browser and are not included in the service backup.
+Chainalysis checks also use Tor and fail if Tor is unavailable. Analysis settings, bookmarks and saved graphs stay in your browser and are not included in the service backup.
