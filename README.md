@@ -9,7 +9,7 @@
 > upstream documentation is accurate and fully applicable — see the
 > Documentation section of `instructions.md` for links.
 
-[Am I Exposed?](https://github.com/Copexit/am-i-exposed) grades a Bitcoin address or transaction against the chain-analysis heuristics surveillance firms use. On StartOS every lookup it makes is sourced locally or anonymously: chain data comes from your own Mempool instance, and external database queries leave through a bundled Tor proxy.
+[Am I Exposed?](https://github.com/Copexit/am-i-exposed) grades a Bitcoin address or transaction against the chain-analysis heuristics surveillance firms use. On StartOS chain data comes from your own Mempool instance; external database queries use the bundled Tor proxy.
 
 - **Upstream repo:** <https://github.com/Copexit/am-i-exposed>
 - **Wrapper repo:** <https://github.com/Start9Labs/am-i-exposed-startos>
@@ -54,11 +54,11 @@ Two images and two long-running subcontainers: the upstream application, and a s
 
 One volume, mounted only into the application.
 
-| Volume | Mount Point | Purpose                          |
-| ------ | ----------- | -------------------------------- |
-| `main` | `/data`     | The application's data directory |
+| Volume | Mount Point | Purpose                                                                    |
+| ------ | ----------- | -------------------------------------------------------------------------- |
+| `main` | `/data`     | Reserved application data path; the web app stores settings in the browser |
 
-The `tor-proxy` subcontainer mounts nothing — it holds no state and is configured entirely by environment.
+The `tor-proxy` subcontainer mounts nothing — it holds no state and is configured entirely by environment. Analysis settings, bookmarks, saved graphs, and Observatory responses are stored in the browser (localStorage/IndexedDB), not in the service volume.
 
 ## File Models
 
@@ -97,7 +97,7 @@ One interface. Nothing is exported for dependent services, and the Tor shim is n
 | --------- | ---- | ---- | ---- | ------------------------------- |
 | Web UI    | `ui` | ui   | 8080 | The Am I Exposed? web interface |
 
-The port is bound on the `ui-multi` MultiHost and is not masked. The shim listens on loopback inside the service only.
+The port is bound on the `ui-multi` MultiHost and is not masked. The shim is reachable only within the service, through the application's `/tor-proxy/` route. It forwards Chainalysis lookups and CoinJoin Observatory requests (Whirlpool statistics and LiquiSabi dashboard) over Tor. The Observatory also links to its external data sources; following those links leaves the service.
 
 ## Installation and First-Run Flow
 
@@ -130,14 +130,14 @@ Two checks, but only one is shown to you.
 
 The `main` volume is copied wholesale — `sdk.Backups.ofVolumes('main')`. No dump step and nothing excluded.
 
-The tool holds no accounts and no user data of consequence: analysis is performed per request against Mempool, so a restored instance is functionally indistinguishable from a fresh install, and needs its two dependencies present before it will start either way.
+The server holds no accounts; analysis is performed per request against Mempool. Browser-stored settings, bookmarks and saved graphs are outside the service backup. A restored instance needs its two dependencies present before it will start.
 
 ## Limitations and Differences
 
 1. **Mempool and Tor are both required.** Neither can be pointed at an external instance — the addresses come from the local dependency's own bindings.
 2. **The service will not start while Mempool's web UI is unhealthy**, by design, rather than starting and reporting an unreachable backend.
 3. **The onion route to Mempool is not used.** `APP_MEMPOOL_HIDDEN_SERVICE` is always empty; the application reaches Mempool over the local bridge instead, which is faster and no less private.
-4. **External lookups are Tor-only.** They go through the bundled shim into Tor's SOCKS proxy, and fail rather than falling back to clearnet if Tor is not running.
+4. **External lookups are Tor-only.** Chainalysis checks and CoinJoin Observatory data go through the bundled shim into Tor's SOCKS proxy, and fail rather than falling back to clearnet if Tor is not running.
 5. **No riscv64 build.** x86_64 and aarch64 only.
 
 ---

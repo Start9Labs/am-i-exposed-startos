@@ -16,6 +16,8 @@ The current pin lives in `startos/manifest/index.ts` on the `images.main.source.
 
 Bump `dockerTag` for the `main` image in `startos/manifest/index.ts` to `ghcr.io/copexit/am-i-exposed-umbrel:v<new version>`.
 
+Compare the upstream `umbrel/tor-proxy/` routes and `umbrel/nginx.conf.template` with this package's `tor-proxy/server.js`: the local shim supplies the same browser-facing `/tor-proxy/` API with StartOS's Tor bridge address, and a new UI route needs a matching handler here.
+
 ## The Tor proxy's Node base is maintenance, not a release trigger
 
 `tor-proxy/` is a first-party sidecar — a Node.js HTTP-to-SOCKS shim built on `socks-proxy-agent`, with the Tor daemon itself supplied by the `tor` dependency. Its `node:<major>-alpine` base is a runtime, not a delivery vehicle for any upstream software, so **a newer Node release is not an upstream update and never ships a version of its own.** Roll the base forward only alongside a bump or a fix that is already shipping.
