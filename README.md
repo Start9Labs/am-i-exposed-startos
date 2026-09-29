@@ -9,7 +9,7 @@
 > upstream documentation is accurate and fully applicable — see the
 > Documentation section of `instructions.md` for links.
 
-[Am I Exposed?](https://github.com/Copexit/am-i-exposed) grades a Bitcoin address or transaction against the chain-analysis heuristics surveillance firms use. On StartOS chain data comes from your own Mempool instance; external database queries use the bundled Tor proxy.
+[Am I Exposed?](https://github.com/Copexit/am-i-exposed) grades a Bitcoin address or transaction against the chain-analysis heuristics surveillance firms use. Its scanner offers transaction-flow and graph views. On StartOS chain data comes from your own Mempool instance; external database queries use the bundled Tor proxy.
 
 - **Upstream repo:** <https://github.com/Copexit/am-i-exposed>
 - **Wrapper repo:** <https://github.com/Start9Labs/am-i-exposed-startos>
@@ -138,7 +138,8 @@ The server holds no accounts; analysis is performed per request against Mempool.
 2. **The service will not start while Mempool's web UI is unhealthy**, by design, rather than starting and reporting an unreachable backend.
 3. **The onion route to Mempool is not used.** `APP_MEMPOOL_HIDDEN_SERVICE` is always empty; the application reaches Mempool over the local bridge instead, which is faster and no less private.
 4. **External lookups are Tor-only.** Chainalysis checks and CoinJoin Observatory data go through the bundled shim into Tor's SOCKS proxy, and fail rather than falling back to clearnet if Tor is not running.
-5. **No riscv64 build.** x86_64 and aarch64 only.
+5. **The self-hosted UI analyzes mainnet.** Saved testnet3 selections return to mainnet; the app no longer supports testnet3.
+6. **No riscv64 build.** x86_64 and aarch64 only.
 
 ---
 

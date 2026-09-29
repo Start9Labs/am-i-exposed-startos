@@ -21,7 +21,7 @@ Am I Exposed? requires two dependencies — install and start each before launch
 
 ### Web UI
 
-Paste an address, xpub, or transaction id and the tool walks you through what an outside observer could infer about it.
+Paste an address, xpub, or transaction id into the redesigned scanner to see what an outside observer could infer about it. Explore the transaction flow and graph, and choose a light or dark theme. The self-hosted app analyzes mainnet data from your Mempool service; saved testnet3 selections return to mainnet.
 
 Results that link to **View on local mempool** open your own Mempool service — using its public address if you have one set up, otherwise its `.local` address (reachable from your home network).
 
