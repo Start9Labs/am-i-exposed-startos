@@ -18,7 +18,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
   // webui health isn't success holds the daemons and restarts primary —
   // reconnecting it — as soon as Mempool is reachable again. (Mempool's webui
   // requires its api, so webui success implies the backend is up too.)
-  // checkDependencies can't do this: it's a one-shot read with no reactive
+  // dependencies.check can't do this: it's a one-shot read with no reactive
   // callback, so main would never re-run when Mempool's status changed.
   const mempoolStatus = await sdk
     .getStatus(effects, { packageId: 'mempool' })
