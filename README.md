@@ -37,18 +37,18 @@
 
 Two upstream images and two long-running subcontainers: the static application served by nginx, and its HTTP-to-SOCKS proxy. Both images are pinned to the same upstream release; the package carries no local proxy implementation.
 
-| Property      | Value                                                                       |
-| ------------- | --------------------------------------------------------------------------- |
+| Property      | Value                                                                              |
+| ------------- | ---------------------------------------------------------------------------------- |
 | Images        | `ghcr.io/copexit/am-i-exposed-umbrel` and `ghcr.io/copexit/am-i-exposed-tor-proxy` |
-| Architectures | x86_64, aarch64                                                             |
-| Entrypoint    | Each image's own                                                            |
+| Architectures | x86_64, aarch64                                                                    |
+| Entrypoint    | Each image's own                                                                   |
 
-| Subcontainer | Image       | Purpose                                                                        |
-| ------------ | ----------- | ------------------------------------------------------------------------------ |
-| `main`       | upstream    | The `primary` daemon — the analyzer and its web UI, and the one to `attach` to |
-| `tor-proxy`  | upstream    | A Node HTTP-to-SOCKS proxy that forwards outbound lookups into Tor's SOCKS port |
+| Subcontainer | Image    | Purpose                                                                         |
+| ------------ | -------- | ------------------------------------------------------------------------------- |
+| `main`       | upstream | The `primary` daemon — the analyzer and its web UI, and the one to `attach` to  |
+| `tor-proxy`  | upstream | A Node HTTP-to-SOCKS proxy that forwards outbound lookups into Tor's SOCKS port |
 
-`primary` requires `tor-proxy`, so the shim is listening before the application can make its first external request.
+`primary` requires `tor-proxy`, so the proxy is listening before the application can make its first external request.
 
 ## Volume and Data Layout
 
@@ -66,13 +66,13 @@ None. The package writes no configuration file: everything it needs to tell the 
 
 Both subcontainers are configured this way:
 
-| Variable                                 | Subcontainer | Value                                                              |
-| ---------------------------------------- | ------------ | ------------------------------------------------------------------ |
-| `PORT`, `TOR_PROXY_IP`, `TOR_PROXY_PORT` | `tor-proxy` | The proxy's HTTP port and Tor's SOCKS bridge IP and port |
-| `APP_MEMPOOL_IP`, `APP_MEMPOOL_PORT`     | `main`       | Mempool's web UI, split out of its bridge address                  |
-| `APP_TOR_PROXY_IP`, `APP_TOR_PROXY_PORT` | `main`       | The shim, on loopback inside the service                           |
-| `APP_MEMPOOL_EXTERNAL_URL`               | `main`       | A browser-reachable address for Mempool — see below                |
-| `APP_MEMPOOL_HIDDEN_SERVICE`             | `main`       | Always empty; the onion variant is not used                        |
+| Variable                                 | Subcontainer | Value                                                    |
+| ---------------------------------------- | ------------ | -------------------------------------------------------- |
+| `PORT`, `TOR_PROXY_IP`, `TOR_PROXY_PORT` | `tor-proxy`  | The proxy's HTTP port and Tor's SOCKS bridge IP and port |
+| `APP_MEMPOOL_IP`, `APP_MEMPOOL_PORT`     | `main`       | Mempool's web UI, split out of its bridge address        |
+| `APP_TOR_PROXY_IP`, `APP_TOR_PROXY_PORT` | `main`       | The proxy, on loopback inside the service                |
+| `APP_MEMPOOL_EXTERNAL_URL`               | `main`       | A browser-reachable address for Mempool — see below      |
+| `APP_MEMPOOL_HIDDEN_SERVICE`             | `main`       | Always empty; the onion variant is not used              |
 
 `APP_MEMPOOL_EXTERNAL_URL` is what the results page's "view on local mempool" links point at, so unlike the others it has to be an address _your browser_ can reach, not one the container can. The package picks the first of Mempool's public domain, its public IP, or its mDNS `.local` name, and passes an empty string if it has none — which upstream treats as "no link" rather than a broken one.
 
@@ -119,14 +119,14 @@ None. This package raises no tasks, so the service is never held on a prompt and
 
 Two checks, but only one is shown to you.
 
-| Check       | Displayed       | Method                       | Grace Period |
-| ----------- | --------------- | ---------------------------- | ------------ |
-| `primary`   | "Web Interface" | Port 8080 is listening       | SDK default  |
-| `tor-proxy` | — internal      | The shim's port is listening | SDK default  |
+| Check       | Displayed       | Method                        | Grace Period |
+| ----------- | --------------- | ----------------------------- | ------------ |
+| `primary`   | "Web Interface" | Port 8080 is listening        | SDK default  |
+| `tor-proxy` | — internal      | The proxy's port is listening | SDK default  |
 
 **`primary` failing** means the analyzer is not serving. Because it cannot start until Mempool is healthy, a failure here after a period of running points at the application rather than at a dependency.
 
-**`tor-proxy` has `display: null`** — it exists so that a dead shim restarts the service, not to be read. A service that keeps restarting with no failing check on screen is this one failing; the service logs name it.
+**`tor-proxy` has `display: null`** — it exists so that a dead proxy restarts the service, not to be read. A service that keeps restarting with no failing check on screen is this one failing; the service logs name it.
 
 ## Backups and Restore
 
@@ -155,7 +155,7 @@ architectures:
   - aarch64
 subcontainers:
   - main # the analyzer; the one to attach to
-  - tor-proxy # HTTP-to-SOCKS shim
+  - tor-proxy # HTTP-to-SOCKS proxy
 volumes:
   main: /data
 file_models: []
