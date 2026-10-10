@@ -1,33 +1,28 @@
 # Updating the upstream version
 
-Am I Exposed? ships two images: the upstream analyzer (`ghcr.io/copexit/am-i-exposed-umbrel`, a pinned `dockerTag` in the manifest) and a small bundled Tor proxy built locally from `tor-proxy/` via `dockerBuild` (no pinned tag).
+Am I Exposed? ships two upstream images: the analyzer (`ghcr.io/copexit/am-i-exposed-umbrel`) and its Tor proxy (`ghcr.io/copexit/am-i-exposed-tor-proxy`). Both use the same release tag, derived from `upstreamVersion` in `startos/utils.ts`.
 
 ## Determining the upstream version
 
 **[Copexit/am-i-exposed](https://github.com/Copexit/am-i-exposed)** is the only upstream this package tracks. It publishes git tags, not GitHub Releases:
 
 ```sh
-gh api repos/Copexit/am-i-exposed/tags --jq '.[0].name'
+gh api repos/Copexit/am-i-exposed/tags --jq '.[].name'
 ```
 
-The current pin lives in `startos/manifest/index.ts` on the `images.main.source.dockerTag` line (`ghcr.io/copexit/am-i-exposed-umbrel:v<version>`). Each upstream tag `vX.Y.Z` is published to GHCR with the matching `:vX.Y.Z` tag.
+Choose the newest stable tag whose **two** images are published for amd64 and arm64:
+
+```sh
+docker manifest inspect ghcr.io/copexit/am-i-exposed-umbrel:v<version>
+docker manifest inspect ghcr.io/copexit/am-i-exposed-tor-proxy:v<version>
+```
+
+The current application pin is `upstreamVersion` in `startos/utils.ts`; `startos/manifest/index.ts` uses it for both image tags. Preserve every upstream version component in the StartOS version in `startos/versions/current.ts`.
 
 ## Applying the bump
 
-Bump `dockerTag` for the `main` image in `startos/manifest/index.ts` to `ghcr.io/copexit/am-i-exposed-umbrel:v<new version>`.
+Update `upstreamVersion` in `startos/utils.ts` to the new upstream version. This updates both image pins and the upstream portion of the current StartOS version; reset its downstream revision to `:0` and update its localized release notes according to the packaging guide.
 
-Compare the upstream `umbrel/tor-proxy/` routes and `umbrel/nginx.conf.template` with this package's `tor-proxy/server.js`: the local shim supplies the same browser-facing `/tor-proxy/` API with StartOS's Tor bridge address, and a new UI route needs a matching handler here.
+For the scrutiny tier required by the guide, check upstream's `umbrel/nginx.conf.template` and `umbrel/tor-proxy/server.js` for changes to the environment and port contracts in `startos/main.ts`. The package passes Tor's bridge address as `TOR_PROXY_IP` and `TOR_PROXY_PORT`, and nginx forwards `/tor-proxy/` to that upstream sidecar. Its service routes and registry ship in the upstream image — do not maintain a second routing implementation here.
 
-## The Tor proxy's Node base is maintenance, not a release trigger
-
-`tor-proxy/` is a first-party sidecar — a Node.js HTTP-to-SOCKS shim built on `socks-proxy-agent`, with the Tor daemon itself supplied by the `tor` dependency. Its `node:<major>-alpine` base is a runtime, not a delivery vehicle for any upstream software, so **a newer Node release is not an upstream update and never ships a version of its own.** Roll the base forward only alongside a bump or a fix that is already shipping.
-
-Move the major only once the pinned line leaves [LTS maintenance](https://github.com/nodejs/release#release-schedule). The pin is the `FROM` line in `tor-proxy/Dockerfile`; to list the alpine variants Docker Hub currently carries for it:
-
-```sh
-NODE_MAJOR=$(grep -oP '(?<=^FROM node:)[0-9]+' tor-proxy/Dockerfile)
-curl -fsSL "https://hub.docker.com/v2/repositories/library/node/tags?name=${NODE_MAJOR}&page_size=100&ordering=last_updated" \
-  | jq -r '.results[].name' | grep -E "^${NODE_MAJOR}(\.[0-9]+){0,2}-alpine$"
-```
-
-`socks-proxy-agent` is tracked via `tor-proxy/package.json` and `npm update`, not here.
+The Tor daemon itself is supplied by the StartOS `tor` dependency, not either application image. Neither the upstream Node runtime nor this dependency's release is an upstream-version trigger for this package.
