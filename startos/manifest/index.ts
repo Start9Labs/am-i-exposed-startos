@@ -1,4 +1,5 @@
 import { setupManifest } from '@start9labs/start-sdk'
+import { upstreamVersion } from '../utils'
 import { long, short } from './i18n'
 
 export const manifest = setupManifest({
@@ -14,15 +15,13 @@ export const manifest = setupManifest({
   images: {
     main: {
       source: {
-        dockerTag: 'ghcr.io/copexit/am-i-exposed-umbrel:v0.37.5',
+        dockerTag: `ghcr.io/copexit/am-i-exposed-umbrel:v${upstreamVersion}`,
       },
       arch: ['x86_64', 'aarch64'],
     },
     'tor-proxy': {
       source: {
-        dockerBuild: {
-          workdir: './tor-proxy',
-        },
+        dockerTag: `ghcr.io/copexit/am-i-exposed-tor-proxy:v${upstreamVersion}`,
       },
       arch: ['x86_64', 'aarch64'],
     },

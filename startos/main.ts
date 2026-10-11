@@ -69,7 +69,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     .const()
 
   // Tor's SOCKS proxy over the bridge, handed to the tor-proxy sidecar as
-  // TOR_SOCKS. With the 9050 fallback the resolved address stays constant across
+  // TOR_PROXY_IP/TOR_PROXY_PORT. With the 9050 fallback the resolved address stays constant across
   // tor install/update/uninstall, so this `.const()` never restarts on tor
   // churn; a dead bridge address is just connection-refused, so routing
   // Chainalysis lookups through it is always safe.
@@ -81,6 +81,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
       fallbackPort: socksPort,
     })
     .const()
+  const [torIp, torPort] = torSocks.split(':')
 
   return sdk.Daemons.of(effects)
     .addDaemon('tor-proxy', {
@@ -94,7 +95,8 @@ export const main = sdk.setupMain(async ({ effects }) => {
         command: sdk.useEntrypoint(),
         env: {
           PORT: String(torProxyPort),
-          TOR_SOCKS: torSocks,
+          TOR_PROXY_IP: torIp,
+          TOR_PROXY_PORT: torPort,
         },
       },
       ready: {
