@@ -21,7 +21,7 @@ The current application pin is `upstreamVersion` in `startos/utils.ts`; `startos
 
 ## Applying the bump
 
-Update `upstreamVersion` in `startos/utils.ts` to the new upstream version. This updates both image pins and the upstream portion of the current StartOS version; reset its downstream revision to `:0` and update its localized release notes according to the packaging guide.
+Update `upstreamVersion` in `startos/utils.ts` to the new upstream version; this updates both image pins. Then set `version` in `startos/versions/current.ts` to the new upstream version with the downstream revision reset to `:0`, written as a quoted string literal — CI reads it from the file text — and update its localized release notes according to the packaging guide.
 
 For the scrutiny tier required by the guide, check upstream's `umbrel/nginx.conf.template` and `umbrel/tor-proxy/server.js` for changes to the environment and port contracts in `startos/main.ts`. The package passes Tor's bridge address as `TOR_PROXY_IP` and `TOR_PROXY_PORT`, and nginx forwards `/tor-proxy/` to that upstream sidecar. Its service routes and registry ship in the upstream image — do not maintain a second routing implementation here.
 
