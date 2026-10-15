@@ -29,4 +29,10 @@ Results that link to **View on local mempool** open your own Mempool service —
 
 The **Observatory** shows Whirlpool activity, WabiSabi coordinator statistics and a live flow map, plus P2P market offers from RoboSats, Mostro and HodlHodl. Its data is fetched from external sources through Tor. Links to those sources open outside the app.
 
-Chainalysis checks and opt-in CoinJoin service checks also use Tor and fail if Tor is unavailable. Service checks send transaction IDs to the selected external services through Tor. Analysis settings, bookmarks, saved graphs, wallets and labels stay in your browser and are not included in the service backup.
+Chainalysis checks and opt-in CoinJoin service checks also use Tor and fail if Tor is unavailable. Service checks send transaction IDs to the selected external services through Tor.
+
+### Browser data and backups
+
+Analysis settings, bookmarks, saved graphs, wallets and labels stay in your browser and are not included in the service backup. In the app's settings, use **Workspace → Export** to save a separate browser-data backup, choosing whether to include wallet bookmarks, saved wallet scans and settings. Use **Import** to restore it. Password protection is enabled by default; keep the password safe, as it cannot be recovered.
+
+You can also enable **Lock saved wallet keys with a password** in Workspace settings. This protects saved xpubs/descriptors, not all browser data or the device itself. Open the app through trusted HTTPS for encrypted backups and wallet locking; these features require a secure browser context.
