@@ -132,7 +132,7 @@ Two checks, but only one is shown to you.
 
 The `main` volume is copied wholesale — `sdk.Backups.ofVolumes('main')`. No dump step and nothing excluded.
 
-The server holds no accounts; analysis is performed per request against Mempool. Browser-stored settings, bookmarks and saved graphs are outside the service backup. A restored instance needs its two dependencies present before it will start.
+The server holds no accounts; analysis is performed per request against Mempool. Browser-stored settings, bookmarks, saved graphs, wallet scans and the encrypted wallet-key vault are outside the service backup. The app's workspace export/import backs up browser data separately; StartOS neither captures nor restores those files or their passwords. A restored instance needs its two dependencies present before it will start.
 
 ## Limitations and Differences
 
