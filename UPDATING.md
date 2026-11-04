@@ -17,12 +17,12 @@ docker manifest inspect ghcr.io/copexit/am-i-exposed-umbrel:v<version>
 docker manifest inspect ghcr.io/copexit/am-i-exposed-tor-proxy:v<version>
 ```
 
-The current application pin is `upstreamVersion` in `startos/utils.ts`; `startos/manifest/index.ts` uses it for both image tags. Preserve every upstream version component in the StartOS version in `startos/versions/current.ts`.
+The current application pin is `upstreamVersion` in `startos/utils.ts`; `startos/manifest/index.ts` uses it for both image tags.
 
 ## Applying the bump
 
-Update `upstreamVersion` in `startos/utils.ts` to the new upstream version; this updates both image pins. Then set `version` in `startos/versions/current.ts` to the new upstream version with the downstream revision reset to `:0`, written as a quoted string literal — CI reads it from the file text — and update its localized release notes according to the packaging guide.
+Update `upstreamVersion` in `startos/utils.ts` to the new upstream version; this updates both image pins.
 
-For the scrutiny tier required by the guide, check upstream's `umbrel/nginx.conf.template` and `umbrel/tor-proxy/server.js` for changes to the environment and port contracts in `startos/main.ts`. The package passes Tor's bridge address as `TOR_PROXY_IP` and `TOR_PROXY_PORT`, and nginx forwards `/tor-proxy/` to that upstream sidecar. Its service routes and registry ship in the upstream image — do not maintain a second routing implementation here.
+Check upstream's `umbrel/nginx.conf.template` and `umbrel/tor-proxy/server.js` for changes to the environment and port contracts in `startos/main.ts`. The package passes Tor's bridge address as `TOR_PROXY_IP` and `TOR_PROXY_PORT`, and nginx forwards `/tor-proxy/` to that upstream sidecar.
 
 The Tor daemon itself is supplied by the StartOS `tor` dependency, not either application image. Neither the upstream Node runtime nor this dependency's release is an upstream-version trigger for this package.
