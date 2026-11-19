@@ -5,9 +5,10 @@ USER root
 RUN apk upgrade --no-cache ca-certificates-bundle \
  && if [ -f /etc/ssl/certs/ca-certificates.crt.apk-new ]; then mv /etc/ssl/certs/ca-certificates.crt.apk-new /etc/ssl/certs/ca-certificates.crt; fi \
  && ! grep -q MIICTjCCAdOgAwIBAgIKPPYHqWhwDtqLhDAKBggqhkjOPQQDAzBr /etc/ssl/certs/ca-certificates.crt
-# Upstream's Node predates the October 2026 security release.
-COPY --from=node:22.23.4-alpine3.24 /usr/local/bin/node /usr/local/bin/node
-ENV NODE_VERSION=22.23.4
+# Upstream's Node predates the November 2026 security release.
+COPY --from=node:22.23.5-alpine3.24@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a /usr/local/bin/node /usr/local/bin/node
+ENV NODE_VERSION=22.23.5
+RUN [ "$(node --version)" = v22.23.5 ]
 USER 1000
 # Node otherwise trusts its compiled-in roots instead of the system store.
 ENV NODE_OPTIONS=--use-openssl-ca
