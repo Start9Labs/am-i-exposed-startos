@@ -35,7 +35,7 @@
 
 ## Image and Container Runtime
 
-Two upstream images and two long-running subcontainers: the static application served by nginx, and its HTTP-to-SOCKS proxy. Both images are pinned to the same upstream release; the package carries no local proxy implementation. The root `Dockerfile` layers the proxy image with an upgraded CA store, `NODE_OPTIONS=--use-openssl-ca`, and the `node` binary from `node:22.23.4-alpine3.24`: temporary fixes that come out once upstream ships an image built on a fixed store and on Node 22.23.4 or later.
+Two upstream images and two long-running subcontainers: the static application served by nginx, and its HTTP-to-SOCKS proxy. Both images are pinned to the same upstream release; the package carries no local proxy implementation. The root `Dockerfile` layers the proxy image with an upgraded CA store, `NODE_OPTIONS=--use-openssl-ca`, and the `node` binary from `node:22.23.5-alpine3.24`: temporary fixes that come out once upstream ships an image built on a fixed store and on Node 22.23.5 or later.
 
 | Property      | Value                                                                              |
 | ------------- | ---------------------------------------------------------------------------------- |
