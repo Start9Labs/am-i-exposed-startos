@@ -21,11 +21,7 @@ export const manifest = setupManifest({
     },
     'tor-proxy': {
       source: {
-        dockerBuild: {
-          buildArgs: {
-            IMAGE: `ghcr.io/copexit/am-i-exposed-tor-proxy:v${upstreamVersion}`,
-          },
-        },
+        dockerTag: `ghcr.io/copexit/am-i-exposed-tor-proxy:v${upstreamVersion}`,
       },
       arch: ['x86_64', 'aarch64'],
     },

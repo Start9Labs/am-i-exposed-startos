@@ -35,7 +35,7 @@
 
 ## Image and Container Runtime
 
-Two upstream images and two long-running subcontainers: the static application served by nginx, and its HTTP-to-SOCKS proxy. Both images are pinned to the same upstream release; the package carries no local proxy implementation. The root `Dockerfile` layers the proxy image with an upgraded CA store, `NODE_OPTIONS=--use-openssl-ca`, and the `node` binary from `node:22.23.5-alpine3.24`: temporary fixes that come out once upstream ships an image built on a fixed store and on Node 22.23.5 or later.
+Two upstream images and two long-running subcontainers: the static application served by nginx, and its HTTP-to-SOCKS proxy. Both images are pinned to the same upstream release; the package carries no local proxy implementation.
 
 | Property      | Value                                                                              |
 | ------------- | ---------------------------------------------------------------------------------- |
@@ -43,10 +43,10 @@ Two upstream images and two long-running subcontainers: the static application s
 | Architectures | x86_64, aarch64                                                                    |
 | Entrypoint    | Each image's own                                                                   |
 
-| Subcontainer | Image                   | Purpose                                                                         |
-| ------------ | ----------------------- | ------------------------------------------------------------------------------- |
-| `main`       | upstream                | The `primary` daemon — the analyzer and its web UI, and the one to `attach` to  |
-| `tor-proxy`  | upstream + `Dockerfile` | A Node HTTP-to-SOCKS proxy that forwards outbound lookups into Tor's SOCKS port |
+| Subcontainer | Image    | Purpose                                                                         |
+| ------------ | -------- | ------------------------------------------------------------------------------- |
+| `main`       | upstream | The `primary` daemon — the analyzer and its web UI, and the one to `attach` to  |
+| `tor-proxy`  | upstream | A Node HTTP-to-SOCKS proxy that forwards outbound lookups into Tor's SOCKS port |
 
 `primary` requires `tor-proxy`, so the proxy is listening before the application can make its first external request.
 
